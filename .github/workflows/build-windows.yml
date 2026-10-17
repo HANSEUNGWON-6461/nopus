@@ -1,0 +1,38 @@
+
+name: Build nopus for Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install compiler and libopus
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            make
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-opus
+
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          make clean
+          make CC=gcc LDFLAGS="-static -lopus -lm"
+          test -f nopus.exe
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: nopus-windows-x64
+          path: nopus.exe
